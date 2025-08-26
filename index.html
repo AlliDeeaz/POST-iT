@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Social Post Studio</title>
+  <meta name="description" content="Generate Social Media Posts with captions, hashtags and images." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="" width="24" height="24" />
+      <strong>Social Post Studio</strong>
+    </div>
+    <nav class="links">
+      <a href="https://github.com/new" target="_blank" rel="noopener">Fork mich auf GitHub ↗</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>Einstellungen</h2>
+      <form id="form">
+        <div class="grid">
+          <label>Plattform
+            <select id="platform">
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="x">X (Twitter)</option>
+            </select>
+          </label>
+          <label>Sprache
+            <select id="lang">
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <label>Ton
+            <select id="tone">
+              <option value="informativ">Informativ</option>
+              <option value="locker">Locker</option>
+              <option value="motivational">Motivierend</option>
+              <option value="expert">Expertise</option>
+            </select>
+          </label>
+          <label>Brand‑Voice
+            <input id="voice" type="text" placeholder="z.B. nahbar, direkt, humorvoll" />
+          </label>
+          <label>Handle/Watermark
+            <input id="handle" type="text" placeholder="@deinaccount" />
+          </label>
+          <label>Varianten
+            <input id="variants" type="number" min="1" max="6" value="3" />
+          </label>
+        </div>
+
+        <label>Thema/Hook
+          <input id="topic" type="text" placeholder="z.B. 5 Tipps für besseren Content" required />
+        </label>
+
+        <label>Call‑to‑Action
+          <input id="cta" type="text" placeholder="Jetzt speichern & teilen!" />
+        </label>
+
+        <label>Keywords (Komma‑getrennt)
+          <input id="keywords" type="text" placeholder="content, reichweite, tipps" />
+        </label>
+
+        <div class="grid">
+          <label>Max. Zeichen (Caption)
+            <input id="maxChars" type="number" min="60" max="2200" value="300" />
+          </label>
+          <label>Hashtag‑Limit
+            <input id="maxTags" type="number" min="0" max="30" value="10" />
+          </label>
+          <label>Seed (Reproduzierbar)
+            <input id="seed" type="number" min="0" max="999999" value="0" />
+          </label>
+        </div>
+
+        <details>
+          <summary>Bildgenerator (Canvas)</summary>
+          <div class="grid">
+            <label>Format
+              <select id="imgSize">
+                <option value="1080">Quadrat 1080×1080</option>
+                <option value="1350">Hochkant 1080×1350</option>
+                <option value="1920">Story 1080×1920</option>
+              </select>
+            </label>
+            <label>Verlauf Start
+              <input id="gradA" type="color" value="#0ea5e9" />
+            </label>
+            <label>Verlauf Ende
+              <input id="gradB" type="color" value="#9333ea" />
+            </label>
+          </div>
+          <label>Text fürs Bild (optional)
+            <input id="imgText" type="text" placeholder="Kurzheadline für das Bild" />
+          </label>
+          <div class="grid">
+            <label>Logo hochladen (optional)
+              <input id="logoInput" type="file" accept="image/*" />
+            </label>
+            <label>Logo‑Deckkraft
+              <input id="logoAlpha" type="range" min="0" max="1" step="0.05" value="0.85" />
+            </label>
+          </div>
+        </details>
+
+        <div class="actions">
+          <button type="submit" class="primary">Varianten generieren</button>
+          <button type="button" id="savePreset">Preset speichern</button>
+          <button type="button" id="loadPreset">Preset laden</button>
+          <button type="button" id="reset">Zurücksetzen</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Ergebnisse</h2>
+      <div id="results" class="cards"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>© 2025 Social Post Studio · Static MVP · Made for GitHub Pages</small>
+  </footer>
+
+  <template id="card-tpl">
+    <article class="card">
+      <div class="preview">
+        <canvas></canvas>
+      </div>
+      <div class="content">
+        <textarea class="caption" rows="8" readonly></textarea>
+        <div class="meta">
+          <span class="length"></span>
+        </div>
+        <div class="row">
+          <button class="copy">Caption kopieren</button>
+          <button class="download">Bild downloaden</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="main.js" type="module"></script>
+</body>
+</html>
