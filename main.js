@@ -101,7 +101,7 @@ function composeCaption({platform, lang, tone, voice, topic, cta, keywords, maxC
   return caption;
 }
 
-// Canvas rendering
+// Canvas rendering (mit optionalem Foto-Hintergrund)
 async function renderImage({text, handle, size, gradA, gradB, logo, logoAlpha}) {
   const [w, h] = size === 1080 ? [1080,1080]
     : size === 1350 ? [1080,1350] : [1080,1920];
@@ -110,21 +110,42 @@ async function renderImage({text, handle, size, gradA, gradB, logo, logoAlpha}) 
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
 
-  // Background gradient
-  const g = ctx.createLinearGradient(0,0,w,h);
-  g.addColorStop(0, gradA); g.addColorStop(1, gradB);
-  ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+  // Hintergrund: Foto (cover) ODER Farbverlauf
+  if (uploadedBgFile) {
+    const img = await fileToImage(uploadedBgFile);
+    // "Cover" Skalierung: füllt die Fläche, zentriert und schneidet ggf. überstehende Ränder ab
+    const scale = Math.max(w / img.width, h / img.height);
+    const dw = Math.round(img.width * scale);
+    const dh = Math.round(img.height * scale);
+    const dx = Math.round((w - dw) / 2);
+    const dy = Math.round((h - dh) / 2);
+    ctx.drawImage(img, dx, dy, dw, dh);
 
-  // Subtle noise
-  const noise = ctx.createImageData(64, 64);
-  for(let i=0;i<noise.data.length;i+=4){
-    const n = 235 + Math.random()*20;
-    noise.data[i]=n; noise.data[i+1]=n; noise.data[i+2]=n; noise.data[i+3]=8;
+    // leichte Abdunklung für bessere Textlesbarkeit
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    // Farbverlauf
+    const g = ctx.createLinearGradient(0,0,w,h);
+    g.addColorStop(0, gradA); g.addColorStop(1, gradB);
+    ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+
+    // dezentes Noise (nur auf Verlauf nötig)
+    const noise = ctx.createImageData(64, 64);
+    for(let i=0;i<noise.data.length;i+=4){
+      const n = 235 + Math.random()*20;
+      noise.data[i]=n; noise.data[i+1]=n; noise.data[i+2]=n; noise.data[i+3]=8;
+    }
+    const off = document.createElement('canvas');
+    off.width=64; off.height=64;
+    off.getContext('2d').putImageData(noise,0,0);
+    const p = ctx.createPattern(off,'repeat');
+    ctx.globalCompositeOperation='overlay';
+    ctx.fillStyle=p; ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation='source-over';
   }
-  const off = document.createElement('canvas'); off.width=64; off.height=64; off.getContext('2d').putImageData(noise,0,0);
-  const p = ctx.createPattern(off,'repeat'); ctx.globalCompositeOperation='overlay'; ctx.fillStyle=p; ctx.fillRect(0,0,w,h); ctx.globalCompositeOperation='source-over';
 
-  // Text
+  // Text-Overlay (optional)
   if (text?.trim()){
     const pad = Math.round(w*0.08);
     ctx.fillStyle = '#ffffff';
@@ -134,20 +155,17 @@ async function renderImage({text, handle, size, gradA, gradB, logo, logoAlpha}) 
     ctx.font = `700 ${fontSize}px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial`;
     const maxWidth = w - pad*2;
     const lines = wrapText(ctx, text.trim(), maxWidth);
-    // shrink if too many lines
     while(lines.length > 5 && fontSize > 28){
-      fontSize -= 4; ctx.font = `700 ${fontSize}px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+      fontSize -= 4;
+      ctx.font = `700 ${fontSize}px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial`;
       lines.splice(0, lines.length, ...wrapText(ctx, text.trim(), maxWidth));
     }
     let y = Math.round(h*0.27);
-    lines.forEach(line => {
-      ctx.fillText(line, pad, y);
-      y += fontSize * 1.12;
-    });
+    lines.forEach(line => { ctx.fillText(line, pad, y); y += fontSize * 1.12; });
     ctx.shadowBlur = 0;
   }
 
-  // Handle watermark
+  // Handle (Wasserzeichen)
   if (handle?.trim()){
     ctx.fillStyle = 'rgba(255,255,255,.92)';
     const s = Math.round(w*0.035);
@@ -158,7 +176,7 @@ async function renderImage({text, handle, size, gradA, gradB, logo, logoAlpha}) 
     ctx.fillText(txt, w - m.width - pad, h - pad);
   }
 
-  // Logo
+  // Logo (optional)
   if (logo){
     try{
       const img = await fileToImage(logo);
@@ -174,6 +192,7 @@ async function renderImage({text, handle, size, gradA, gradB, logo, logoAlpha}) 
 
   return canvas;
 }
+
 
 function wrapText(ctx, text, maxWidth){
   const words = text.split(/\s+/);
@@ -210,6 +229,12 @@ let uploadedLogoFile = null;
 $("#logoInput").addEventListener("change", (e)=> {
   uploadedLogoFile = e.target.files?.[0] || null;
 });
+
+let uploadedBgFile = null;
+$("#bgInput").addEventListener("change", (e)=> {
+  uploadedBgFile = e.target.files?.[0] || null;
+});
+
 
 $("#savePreset").addEventListener("click", ()=>{
   const data = collectForm();
@@ -331,3 +356,4 @@ function toast(msg){
   const raw = localStorage.getItem("sps:preset");
   if (raw) { try { hydrateForm(JSON.parse(raw)); } catch{} }
 })();
+
